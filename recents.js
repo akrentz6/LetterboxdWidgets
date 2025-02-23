@@ -1,4 +1,4 @@
-const username = "akrentz6"; // Your Letterboxd username
+const username = "your_username"; // Your Letterboxd username
 const profile_url = "https://letterboxd.com/" + username;
 const MAX_REQUESTS = 5;
 
