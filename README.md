@@ -1,5 +1,10 @@
 # LetterboxdWidgets
-Widgets for Letterboxd using [Scriptable](https://itunes.apple.com/app/id1405459188). To use, download Scriptable, create a new script and paste it into the text field. On your home screen, add a widget of the correct size from Scriptable and set the script to the one you created.
+Widgets for Letterboxd using [Scriptable](https://itunes.apple.com/app/id1405459188). To use:
+1. Download Scriptable from the App Store.
+2. Create a new script and paste the code for the widget you've chosen (one of the .js files here) into the text field.
+3. Follow any setup steps I've given below for your widget.
+4. On your home screen, add a widget of the correct size from Scriptable and set the script to the one you created.
+5. Give the widget a moment to load, and you're done!
 
 Note: Widgets require the app they're run from to be opened before opening other apps. This is currently impossible to circumvent.
 
