@@ -24,6 +24,6 @@ Displays your top 4 favourite films in a medium sized widget.
 
 Setup: Replace `'your_username'` in the first line with your Letterboxd username.
 
-To Do List:
+# To Do List:
 - [ ] Create core script to reduce duplicate code.
 - [ ] Add more options for scripts - custom widget update timers, more control over UI, etc.
