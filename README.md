@@ -3,13 +3,19 @@ Widgets for Letterboxd using [Scriptable](https://itunes.apple.com/app/id1405459
 
 Note: Widgets require the app they're run from to be opened before opening other apps. This is currently impossible to circumvent.
 
-# Favourites
-Displays your top 4 favourite films in a medium sized widget.
+# Recents
+
+<img src="assets/recents.png" width="70%">
+
+Displays your 4 most recent films watched (and their ratings) in a medium sized widget.
 
 Setup: Replace `'your_username'` in the first line with your Letterboxd username.
 
-# Recents
-Displays your 4 most recent films watched (and their ratings) in a medium sized widget. 
+# Favourites
+
+<img src="assets/favourites.png" width="70%">
+
+Displays your top 4 favourite films in a medium sized widget.
 
 Setup: Replace `'your_username'` in the first line with your Letterboxd username.
 
