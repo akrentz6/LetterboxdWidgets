@@ -1,59 +1,61 @@
-const username = "your_username"; // Your Letterboxd username
+const username = "akrentz6"; // Your Letterboxd username
 const profile_url = "https://letterboxd.com/" + username;
 const MAX_REQUESTS = 5;
 
 VERSION = "0.1.0";
 const js = `
+
+function getTagValue(parent, tagName, defaultValue="") {
+
+    const elements = parent.getElementsByTagName(tagName);
+    if (elements.length == 0) {
+        return defaultValue;
+    }
+
+    return elements[0].textContent;
+
+}
+
 (function() {
     
-    const section = document.getElementById("favourites");
-    if (!section) {
-        return null;
-    }
-    
-    const filmList = section.querySelector("ul");
-    if (!filmList) {
-        return null;
-    }
-    
-    const films = filmList.getElementsByTagName("li");
+    const parser = new DOMParser();
+    const items = document.getElementsByTagName("item");
     const results = [];
     
-    for (let i = 0; i < films.length; i++) {
-        
-        const film = films[i];
-        
-        const filmDiv = film.querySelector("div[data-film-slug]");
-        if (!filmDiv) {
-            continue;
+    for (let i = 0; i < Math.min(4, items.length); i++) {
+
+        const item = items[i];
+        const link = getTagValue(item, "link");
+        const rating = getTagValue(item, "letterboxd:memberRating", -1);
+
+        let poster = "";
+        const descriptionContent = getTagValue(item, "description", "");
+        if (descriptionContent) {
+
+            const htmlDoc = parser.parseFromString(descriptionContent, "text/html");
+            const img = htmlDoc.querySelector("img");
+            if (img) {
+                src = img.getAttribute("src").replace(" ", "%20") || "";
+            }
+
         }
         
-        const filmSlug = filmDiv.getAttribute("data-film-slug");
-        if (!filmSlug) {
-            continue;
-        }
-        
-        const img = filmDiv.querySelector("img");
-        const src = img ? img.getAttribute("srcset").replace(" ", "%20") : null;
-        
-        if (filmSlug && src) {
-            results.push({ filmSlug, src });
-        }
-        
+        results.push({ link, rating, src });
+
     }
-        
+    
     return results;
     
 })();
-`;
+`
 
 /* The cache folder stores a log file containing the last version
 required for updates to the file structure and each user's last
 favourite films displayed along with the last update time. It also
-contains the cached movie poster for each film. */
+contains the cached movie poster and rating for each film. */
 const localFM = FileManager.local();
 const documentsPath = localFM.documentsDirectory();
-const cachePath = localFM.joinPath(documentsPath, "lbxdwidget_favourites_cache");
+const cachePath = localFM.joinPath(documentsPath, "lbxdwidget_recents_cache");
 const logPath = localFM.joinPath(cachePath, "log.json");
 
 if (!localFM.isDirectory(cachePath)) {
@@ -81,15 +83,16 @@ async function scrapeFilms() {
 
     const films = [];
     const filmSlugs = [];
+    const filmRatings = [];
     const webview = new WebView();
     const cacheLog = JSON.parse(localFM.readString(logPath));
 
     for (let i = 0; i < MAX_REQUESTS; i++) {
-        
+
         // try again if the request fails
         let result;
         try {
-            const request = new Request(profile_url);
+            const request = new Request(profile_url + "/rss");
             await webview.loadRequest(request);
             result = await webview.evaluateJavaScript(js, false);
         }
@@ -97,37 +100,38 @@ async function scrapeFilms() {
             // console.error(error);
             continue;
         }
-        
+
         // we assume that if result.length == 0, the page didn't load fully
         if (!Array.isArray(result) || result.length == 0) continue;
-
+        
         for (let j = 0; j < result.length; j++) {
 
             const film = result[j];
-            const slug = film.filmSlug;
+            const link = film.link;
+            const rating = film.rating;
             const src = film.src;
 
+            const slug = link.split("/").filter(part => part !== '').pop();
             if (filmSlugs.includes(slug)) continue;
-            
+
             // check if the poster is already cached
             const posterPath = localFM.joinPath(cachePath, slug);
             if (localFM.fileExists(posterPath)) {
                 const poster = localFM.readImage(posterPath);
                 filmSlugs.push(slug);
-                films.push({ slug, poster });
+                filmRatings.push(rating);
+                films.push({ slug, poster, rating });
             }
 
             // if not, download the poster
             else {
 
-                // sometimes letterboxd does a 'lazy load' of the page
-                if (src.includes("empty-poster")) continue;
-
                 const poster = await scrapePoster(src);
                 if (poster) {
                     localFM.writeImage(posterPath, poster);
                     filmSlugs.push(slug);
-                    films.push({ slug, poster });
+                    filmRatings.push(rating);
+                    films.push({ slug, poster, rating });
                 }
             }
 
@@ -143,11 +147,12 @@ async function scrapeFilms() {
         for (let i = 0; i < cacheLog.users[username].filmSlugs.length; i++) {
 
             const slug = cacheLog.users[username].filmSlugs[i];
+            const rating = cacheLog.users[username].ratings[i];
             const posterPath = localFM.joinPath(cachePath, slug);
 
             if (localFM.fileExists(posterPath)) {
                 const poster = localFM.readImage(posterPath);
-                films.push({ slug, poster });
+                films.push({ slug, poster, rating });
             }
 
         }
@@ -157,10 +162,21 @@ async function scrapeFilms() {
     }
 
     else {
-        cacheLog.users[username] = { lastUpdate: Date.now(), filmSlugs: filmSlugs };
+        cacheLog.users[username] = { lastUpdate: Date.now(), filmSlugs: filmSlugs, filmRatings: filmRatings };
     }
 
     return films;
+
+}
+
+function formatRating(rating) {
+
+    let ratingString = "★".repeat(Math.floor(rating));
+    if (rating % 1 !== 0) {
+        ratingString += "½";
+    }
+
+    return ratingString;
 
 }
 
@@ -183,11 +199,11 @@ async function createWidget() {
     titleStack.url = profile_url;
     titleStack.addSpacer();
 
-    const title = titleStack.addText("Favourites");
+    const title = titleStack.addText("Recents");
     title.font = Font.semiboldRoundedSystemFont(16);
     titleStack.addSpacer();
 
-    containerStack.addSpacer(16);
+    containerStack.addSpacer(12);
 
     const filmRowStack = containerStack.addStack();
     filmRowStack.centerAlignContent();
@@ -200,7 +216,7 @@ async function createWidget() {
         const posterStack = filmRowStack.addStack();
         posterStack.url = "https://letterboxd.com/film/" + film.slug; // universal link
         posterStack.layoutVertically();
-
+        
         const photoStack = posterStack.addStack();
         photoStack.addSpacer();
         
@@ -210,6 +226,15 @@ async function createWidget() {
         posterPhoto.applyFillingContentMode();
         
         photoStack.addSpacer();
+        posterStack.addSpacer(4);
+
+        const ratingStack = posterStack.addStack();
+        ratingStack.addSpacer();
+
+        const ratingText = ratingStack.addText((film.rating == -1) ? " " : formatRating(film.rating));
+        ratingText.font = Font.mediumSystemFont(10);
+
+        ratingStack.addSpacer();
         posterStack.addSpacer();
 
     }
