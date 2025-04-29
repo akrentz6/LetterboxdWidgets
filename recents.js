@@ -113,7 +113,7 @@ async function scrapeFilms() {
             const rating = film.rating;
             const src = film.src;
 
-            const slug_match = url.match(/\/film\/([^\/]+)/);
+            const slug_match = link.match(/\/film\/([^\/]+)/);
             const slug = slug_match ? slug_match[1] : null;
             if (filmSlugs.includes(slug)) continue;
 
