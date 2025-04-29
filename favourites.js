@@ -1,8 +1,9 @@
 const username = "your_username"; // Your Letterboxd username
 const profile_url = "https://letterboxd.com/" + username;
 const MAX_REQUESTS = 5;
+const REQUEST_TIMEOUT = 10; // seconds
 
-VERSION = "0.1.0";
+VERSION = "0.1.1";
 const js = `
 (function() {
     
@@ -90,6 +91,7 @@ async function scrapeFilms() {
         let result;
         try {
             const request = new Request(profile_url);
+            request.timeoutInterval = REQUEST_TIMEOUT;
             await webview.loadRequest(request);
             result = await webview.evaluateJavaScript(js, false);
         }

@@ -1,8 +1,9 @@
 const username = "your_username"; // Your Letterboxd username
 const profile_url = "https://letterboxd.com/" + username;
 const MAX_REQUESTS = 5;
+const REQUEST_TIMEOUT = 10; // seconds
 
-VERSION = "0.1.0";
+VERSION = "0.1.1";
 const js = `
 
 function getTagValue(parent, tagName, defaultValue="") {
@@ -93,6 +94,7 @@ async function scrapeFilms() {
         let result;
         try {
             const request = new Request(profile_url + "/rss");
+            request.timeoutInterval = REQUEST_TIMEOUT;
             await webview.loadRequest(request);
             result = await webview.evaluateJavaScript(js, false);
         }
@@ -111,7 +113,8 @@ async function scrapeFilms() {
             const rating = film.rating;
             const src = film.src;
 
-            const slug = link.split("/").filter(part => part !== '').pop();
+            const slug_match = url.match(/\/film\/([^\/]+)/);
+            const slug = slug_match ? slug_match[1] : null;
             if (filmSlugs.includes(slug)) continue;
 
             // check if the poster is already cached
