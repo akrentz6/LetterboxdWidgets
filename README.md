@@ -8,6 +8,8 @@ Widgets for Letterboxd using [Scriptable](https://itunes.apple.com/app/id1405459
 
 Note: Widgets require the app they're run from to be opened before opening other apps. This is currently impossible to circumvent. So, when you click on the widget, it will open Scriptable before redirecting to Letterboxd.
 
+Second Note: If you want to reduce mobile data usage, turn off Mobile Data for Scriptable in Settings. This will stop the widget from checking for updates unless on Wi-Fi.
+
 # Recents
 
 <img src="assets/recents.png" width="70%">
