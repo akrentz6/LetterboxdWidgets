@@ -1,7 +1,7 @@
 const username = "your_username"; // Your Letterboxd username
 const profile_url = "https://letterboxd.com/" + username;
 const MAX_REQUESTS = 5;
-const REQUEST_TIMEOUT = 10; // seconds
+const REQUEST_TIMEOUT = 5; // seconds
 
 VERSION = "0.1.1";
 const js = `
@@ -68,6 +68,7 @@ async function scrapePoster(src) {
 
     try {
         const request = new Request(src);
+        request.timeoutInterval = REQUEST_TIMEOUT;
         const img = await request.loadImage();
         return img;
     }
