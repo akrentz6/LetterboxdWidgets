@@ -3,7 +3,7 @@ const profile_url = "https://letterboxd.com/" + username;
 const MAX_REQUESTS = 5;
 const REQUEST_TIMEOUT = 5; // seconds
 
-VERSION = "0.1.2";
+VERSION = "0.1.3";
 const js = `
 (function() {
     
@@ -24,12 +24,12 @@ const js = `
         
         const film = films[i];
         
-        const filmDiv = film.querySelector("div[data-film-slug]");
+        const filmDiv = film.querySelector("div[data-item-slug]");
         if (!filmDiv) {
             continue;
         }
         
-        const filmSlug = filmDiv.getAttribute("data-film-slug");
+        const filmSlug = filmDiv.getAttribute("data-item-slug");
         if (!filmSlug) {
             continue;
         }
