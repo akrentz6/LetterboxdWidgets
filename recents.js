@@ -3,7 +3,7 @@ const profile_url = "https://letterboxd.com/" + username;
 const MAX_REQUESTS = 5;
 const REQUEST_TIMEOUT = 5; // seconds
 
-VERSION = "0.1.1";
+VERSION = "0.1.2";
 const js = `
 
 function getTagValue(parent, tagName, defaultValue="") {
@@ -66,12 +66,17 @@ if (!localFM.fileExists(logPath)) {
     localFM.writeString(logPath, JSON.stringify({ version: VERSION, users: {} }));
 }
 
+function timeout(seconds) {
+    return new Promise((_, reject) =>
+        Timer.schedule(seconds * 1_000, false, () => reject(new Error("Timeout")))
+    );
+}
+
 async function scrapePoster(src) {
 
     try {
         const request = new Request(src);
-        request.timeoutInterval = REQUEST_TIMEOUT;
-        const img = await request.loadImage();
+        const img = await Promise.race([request.loadImage(), timeout(REQUEST_TIMEOUT)]);
         return img;
     }
     catch (error) {
@@ -95,8 +100,7 @@ async function scrapeFilms() {
         let result;
         try {
             const request = new Request(profile_url + "/rss");
-            request.timeoutInterval = REQUEST_TIMEOUT;
-            await webview.loadRequest(request);
+            await Promise.race([webview.loadRequest(request), timeout(REQUEST_TIMEOUT)]);
             result = await webview.evaluateJavaScript(js, false);
         }
         catch (error) {
@@ -151,7 +155,7 @@ async function scrapeFilms() {
         for (let i = 0; i < cacheLog.users[username].filmSlugs.length; i++) {
 
             const slug = cacheLog.users[username].filmSlugs[i];
-            const rating = cacheLog.users[username].ratings[i];
+            const rating = cacheLog.users[username].filmRatings[i];
             const posterPath = localFM.joinPath(cachePath, slug);
 
             if (localFM.fileExists(posterPath)) {
@@ -168,6 +172,8 @@ async function scrapeFilms() {
     else {
         cacheLog.users[username] = { lastUpdate: Date.now(), filmSlugs: filmSlugs, filmRatings: filmRatings };
     }
+
+    localFM.writeString(logPath, JSON.stringify(cacheLog));
 
     return films;
 
